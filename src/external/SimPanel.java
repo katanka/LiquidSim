@@ -100,14 +100,30 @@ public class SimPanel extends JPanel implements Runnable, KeyListener {
         parentWindow.setLocationRelativeTo(null);
         parentWindow.setVisible(true);
         
-        while(framesInput.getText() == null){
-        	
-        }
+        WindowListener exitListener = new WindowAdapter() {
+
+            @Override
+            public void windowClosing(WindowEvent e) {
+                
+            	
+            	
+                	purgeDirectory(savedir);
+                   System.exit(0);
+            }
+        };
+        parentWindow.addWindowListener(exitListener);
         
     	
        
         
     }
+	
+	private static void purgeDirectory(File dir) {
+	    for (File file: dir.listFiles()) {
+	        if (file.isDirectory()) purgeDirectory(file);
+	        file.delete();
+	    }
+	}
 	
 	public static int getInteger(String s) {
 		int num = 0;
@@ -152,6 +168,8 @@ public class SimPanel extends JPanel implements Runnable, KeyListener {
     	parentWindow.getContentPane().add(me);
         parentWindow.setLocationRelativeTo(null);
         me.setPreferredSize(new Dimension(WIDTH, HEIGHT));
+        
+        
 	}
 	
 	public ArrayList<Element> elements = new ArrayList<Element>();
@@ -260,7 +278,11 @@ public class SimPanel extends JPanel implements Runnable, KeyListener {
         }
         
         while(playing){
+        	try{
         	buffer.add(getImageFromFile(tick));
+        	}catch(Exception e){
+        		
+        	}
         	repaint();
             tick++;
             //System.out.println("olo");
