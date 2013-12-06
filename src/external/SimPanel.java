@@ -22,7 +22,8 @@ public class SimPanel extends JPanel implements Runnable, KeyListener {
 	private static int HEIGHT;
 	private final String folder = "imagefiles";
 	public static final File savedir = new File(new File(System.getProperty("user.home")), ".liquidsim");
-	private int bufferSize = 10;
+	private static int bufferSize = 10;
+	private static int buffertick = 0;
 	private static int numsmall = 100;
 	private static double time=5; //seconds
 	
@@ -31,6 +32,7 @@ public class SimPanel extends JPanel implements Runnable, KeyListener {
 	private int tick;
 	private boolean complete;
 	private boolean playing;
+	private boolean buffering;
 	private long timebase;
 	private int currentfps;
 	
@@ -45,7 +47,7 @@ public class SimPanel extends JPanel implements Runnable, KeyListener {
 	
 	private static ArrayDeque<BufferedImage> buffer;
 	
-	private int totalframes = (int)(fps * time);
+	private static int totalframes = 1;
 	
 	public static void main(String[] args) throws IOException
     {
@@ -157,7 +159,12 @@ public class SimPanel extends JPanel implements Runnable, KeyListener {
 		numsmall = getInteger(numInput.getText());
 		time = getDouble(timeInput.getText());
 		
+		totalframes = (int)(fps * time);
+		
 		dt = 1000/fps;
+		
+		//bufferSize = Math.min(totalframes, 500);
+		
 		//simulate
     	parentWindow.setSize(500, 100);
     	parentWindow.remove(form);
@@ -267,25 +274,32 @@ public class SimPanel extends JPanel implements Runnable, KeyListener {
         tick = bufferSize;
         playing = true;
         
+        buffering = true;
         parentWindow.setSize(1920, 1080);
         parentWindow.setLocation(0, 0);
-        for(int i = 0; i < bufferSize; i++){
-        	if(getImageFromFile(i) == null){
+        while(buffertick < bufferSize){
+        	if(getImageFromFile(buffertick) == null){
         		//System.err.println("HOLY BALLS: "+i);
         		System.exit(0);
         	}
-        	buffer.add(getImageFromFile(i));
+        	
+        	buffer.add(getImageFromFile(buffertick));
+        	repaint();
+        	 buffertick++;
         }
-        
+        buffering = false;
         while(playing){
         	try{
-        	buffer.add(getImageFromFile(tick));
+        		//if(buffer.size() < bufferSize)
+        			buffer.add(getImageFromFile(tick));
         	}catch(Exception e){
         		
         	}
         	repaint();
             tick++;
             //System.out.println("olo");
+            
+
             
             if(tick > totalframes){
             	tick=0;
@@ -413,6 +427,21 @@ public class SimPanel extends JPanel implements Runnable, KeyListener {
 
 			
 			f.drawString(s, x, y);
+			
+		}else if(buffering){
+			
+			double percent = buffertick/(double)bufferSize;
+			
+			int x = parentWindow.getWidth() / 2 - 100;
+			int y = parentWindow.getHeight() / 2 - 10;
+			
+			int width = 200;
+			int height = 20;
+			
+			f.setColor(Color.black);
+			f.fillRect(x, y, width, height);
+			f.setColor(Color.blue);
+			f.fillRect(x+1, y+1, (int)(percent*(width-2)), height-2);
 			
 		}else if (playing){
 			//if(tick == totalframes) return;
