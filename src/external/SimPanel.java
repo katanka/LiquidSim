@@ -34,7 +34,7 @@ public class SimPanel extends JPanel implements Runnable{
 	
 	
 	private int frame;
-	private int tick;
+	private static int tick;
 	private boolean complete;
 	private boolean playing;
 	private boolean buffering;
@@ -56,7 +56,7 @@ public class SimPanel extends JPanel implements Runnable{
 	
 	private static int totalframes = 1;
 	
-	private static HashMap<Integer, Element> hash;
+	//private static HashMap<Integer, Element> hash;
 	
 	public static void main(String[] args) throws IOException
     {
@@ -160,7 +160,7 @@ public class SimPanel extends JPanel implements Runnable{
 	public static void finish(){
 		
 		numsmall = getInteger(numInput.getText());
-		hash = new HashMap<Integer, Element>(numsmall+50);
+		//hash = new HashMap<Integer, Element>(numsmall+50);
 		time = getDouble(timeInput.getText());
 		
 		totalframes = (int)(fps * time);
@@ -189,79 +189,90 @@ public class SimPanel extends JPanel implements Runnable{
 		
 
 		
-		int i = 1;
-		while( i < numsmall+1){
+		int i = 0;
+		while( i < numsmall){
 			double x = Math.random() * 2000;
 			double y = Math.random() * 2000;
 			
 			Element e = new Element(new Vec2(x,y), new Vec2(0,0), ElementType.WATER, elements, Physics.waterDist);
 			elements.add(e);
-			hash.put(i, e);
+			//hash.put(i, e);
 			
 			i++;
 		}
 		
 		elements.add(new Element(new Vec2(1000,500), new Vec2(0,0), ElementType.ROCK, elements, Physics.rockDist));
-		
-		hash.put(0, elements.get(i-1));
+		//hash.put(0, elements.get(i-1));
 		//elements.add(new Element(new Vec2(500,500), new Vec2(0,2), ElementType.ROCK, elements, 40));
 		//hash.put(1, elements.get(i));
 		setFocusable(true);
 		
 		buffer = new ArrayDeque<BufferedImage>(bufferSize);
 		
+		
+		
 		new Thread(this).start();
 	}
 	
 	 public static void update(){
-		 	
-		 	for(int i = 0; i < hash.size(); i+=10){
+		 
+		/* if(tick == 50){
+			Element small = new Element(new Vec2(200,500), new Vec2(0,0), ElementType.ROCK, elements, 40);
+			elements.add(small);
+			//hash.put(elements.indexOf(small), small);
+			//System.out.println(elements.indexOf(small));
+		 }*/
+		 
+		 	for(int i = 0; i < elements.size(); i+=10){
 		 		try{
 		 			
-				for(int j = i+1; j< hash.size(); j+=10){
-			    	Physics.applyGravity(new Manifold(hash.get(i), hash.get(j)));
-			    	Physics.applySpring(new Manifold(hash.get(i), hash.get(j)));
+				for(int j = i+1; j< elements.size(); j+=10){
+			    	Physics.applyGravity(new Manifold(elements.get(i), elements.get(j)));
+			    	Physics.applySpring(new Manifold(elements.get(i), elements.get(j)));
 			    	
-			    	Physics.applyGravity(new Manifold(hash.get(i), hash.get(j+1)));
-			    	Physics.applySpring(new Manifold(hash.get(i), hash.get(j+1)));
+			    	Physics.applyGravity(new Manifold(elements.get(i), elements.get(j+1)));
+			    	Physics.applySpring(new Manifold(elements.get(i), elements.get(j+1)));
 			    	
-			    	Physics.applyGravity(new Manifold(hash.get(i), hash.get(j+2)));
-			    	Physics.applySpring(new Manifold(hash.get(i), hash.get(j+2)));
+			    	Physics.applyGravity(new Manifold(elements.get(i), elements.get(j+2)));
+			    	Physics.applySpring(new Manifold(elements.get(i), elements.get(j+2)));
 			    	
-			    	Physics.applyGravity(new Manifold(hash.get(i), hash.get(j+3)));
-			    	Physics.applySpring(new Manifold(hash.get(i), hash.get(j+3)));
+			    	Physics.applyGravity(new Manifold(elements.get(i), elements.get(j+3)));
+			    	Physics.applySpring(new Manifold(elements.get(i), elements.get(j+3)));
 			    	
-			    	Physics.applyGravity(new Manifold(hash.get(i), hash.get(j+4)));
-			    	Physics.applySpring(new Manifold(hash.get(i), hash.get(j+4)));
+			    	Physics.applyGravity(new Manifold(elements.get(i), elements.get(j+4)));
+			    	Physics.applySpring(new Manifold(elements.get(i), elements.get(j+4)));
 			    	
-			    	Physics.applyGravity(new Manifold(hash.get(i), hash.get(j+5)));
-			    	Physics.applySpring(new Manifold(hash.get(i), hash.get(j+5)));
+			    	Physics.applyGravity(new Manifold(elements.get(i), elements.get(j+5)));
+			    	Physics.applySpring(new Manifold(elements.get(i), elements.get(j+5)));
 			    	
-			    	Physics.applyGravity(new Manifold(hash.get(i), hash.get(j+6)));
-			    	Physics.applySpring(new Manifold(hash.get(i), hash.get(j+6)));
+			    	Physics.applyGravity(new Manifold(elements.get(i), elements.get(j+6)));
+			    	Physics.applySpring(new Manifold(elements.get(i), elements.get(j+6)));
 			    	
-			    	Physics.applyGravity(new Manifold(hash.get(i), hash.get(j+7)));
-			    	Physics.applySpring(new Manifold(hash.get(i), hash.get(j+7)));
+			    	Physics.applyGravity(new Manifold(elements.get(i), elements.get(j+7)));
+			    	Physics.applySpring(new Manifold(elements.get(i), elements.get(j+7)));
 			    	
-			    	Physics.applyGravity(new Manifold(hash.get(i), hash.get(j+8)));
-			    	Physics.applySpring(new Manifold(hash.get(i), hash.get(j+8)));
+			    	Physics.applyGravity(new Manifold(elements.get(i), elements.get(j+8)));
+			    	Physics.applySpring(new Manifold(elements.get(i), elements.get(j+8)));
 			    	
-			    	Physics.applyGravity(new Manifold(hash.get(i), hash.get(j+9)));
-			    	Physics.applySpring(new Manifold(hash.get(i), hash.get(j+9)));
+			    	Physics.applyGravity(new Manifold(elements.get(i), elements.get(j+9)));
+			    	Physics.applySpring(new Manifold(elements.get(i), elements.get(j+9)));
 			    }
 
 	    		
-	    			hash.get(i).update();
-	    			hash.get(i+1).update();
-	    			hash.get(i+2).update();
-	    			hash.get(i+3).update();
-	    			hash.get(i+4).update();
-	    			hash.get(i+5).update();
-	    			hash.get(i+6).update();
-	    			hash.get(i+7).update();
-	    			hash.get(i+8).update();
-	    			hash.get(i+9).update();
-	    		}catch(NullPointerException e){
+	    			elements.get(i).update();
+	    			elements.get(i+1).update();
+	    			elements.get(i+2).update();
+	    			elements.get(i+3).update();
+	    			elements.get(i+4).update();
+	    			elements.get(i+5).update();
+	    			elements.get(i+6).update();
+	    			elements.get(i+7).update();
+	    			elements.get(i+8).update();
+	    			elements.get(i+9).update();
+	    		}catch(Exception e){
+	    			if(!(e instanceof IndexOutOfBoundsException)){
+	    				System.err.println(e);
+	    			}
 	    		}
 	    	}
 		 	
