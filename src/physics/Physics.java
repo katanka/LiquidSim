@@ -7,6 +7,7 @@ public class Physics {
 	
 	private static final double G = 0.01; //gravitational constant
 	private static final double K = 5; //spring constant
+	private static final double R = 0.1; //restitution constant
 	public static final double waterDist = 2; //spring constant
 	public static final double rockDist = 100; //spring constant
 	public static final double F_MAX = 100; //spring constant
@@ -55,7 +56,7 @@ public class Physics {
 		
 		if(Vec2.dotProduct( m.relativeVelocity(), m.normal() ) > 0 /*&& !(m.A.getType() == ElementType.ROCK && m.B.getType() == ElementType.ROCK)*/){
 			//System.err.println("separating");
-			strength *= 0.1;
+			strength *= R;
 		}
 		
 		if(m.A.getType() == ElementType.ROCK && m.B.getType() == ElementType.ROCK){

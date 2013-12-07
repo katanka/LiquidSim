@@ -5,6 +5,7 @@ import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.text.DecimalFormat;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
@@ -27,6 +28,7 @@ public class SimPanel extends JPanel implements Runnable{
 	public static final File savedir = new File(new File(System.getProperty("user.home")), ".liquidsim");
 	private static int bufferSize = 10;
 	private static int buffertick = 0;
+	private static int written = 0;
 	private static int numsmall = 100;
 	private static double time=5; //seconds
 	
@@ -54,9 +56,12 @@ public class SimPanel extends JPanel implements Runnable{
 	
 	private static int totalframes = 1;
 	
+	private static HashMap<Integer, Element> hash;
+	
 	public static void main(String[] args) throws IOException
     {
-
+		
+		
 		parentWindow = new JFrame("Liquid Simulation v0");
     	
 		WIDTH = Toolkit.getDefaultToolkit().getScreenSize().width;
@@ -87,8 +92,7 @@ public class SimPanel extends JPanel implements Runnable{
 
 
 
-        //form.add(framesLabel);
-        //form.add(framesInput);
+
         
         form.add(timeLabel);
         form.add(timeInput);
@@ -155,15 +159,14 @@ public class SimPanel extends JPanel implements Runnable{
 	
 	public static void finish(){
 		
-		//fps = getInteger(framesInput.getText());
 		numsmall = getInteger(numInput.getText());
+		hash = new HashMap<Integer, Element>(numsmall+50);
 		time = getDouble(timeInput.getText());
 		
 		totalframes = (int)(fps * time);
 		
 		dt = 1000/fps;
 		
-		//bufferSize = Math.min(totalframes, 500);
 		
 		//simulate
     	parentWindow.setSize(500, 100);
@@ -179,58 +182,89 @@ public class SimPanel extends JPanel implements Runnable{
         
 	}
 	
-	public ArrayList<Element> elements = new ArrayList<Element>();
+	public static ArrayList<Element> elements = new ArrayList<Element>();
 	
 
 	public SimPanel(){
 		
 
 		
-		//elements.add(new Element(new Vec2(0,50), new Vec2(0,0), ElementType.ROCK, elements, 20));
-		//elements.add(new Element(new Vec2(100,50), new Vec2(0,0), ElementType.WATER, elements, 20));
-		//elements.add(new Element(new Vec2(250,40), new Vec2(0,0), ElementType.ROCK, elements, 20));
-		//elements.add(new Element(new Vec2(100,250), new Vec2(1,0), ElementType.ROCK, elements, 20));
-		elements.add(new Element(new Vec2(1000,500), new Vec2(0,0), ElementType.ROCK, elements, Physics.rockDist));
-		elements.add(new Element(new Vec2(700,500), new Vec2(0,2), ElementType.ROCK, elements, 40));
-		
-		for(int i = 0; i < 0; i++){
-			double x = Math.random() * 1000+500;
-			double y = Math.random() * 800+200;
-			
-			
-			elements.add(new Element(new Vec2(x,y), new Vec2(0,0), ElementType.ROCK, elements, Physics.rockDist));
-		}
-		
-		for(int i = 0; i < numsmall; i++){
+		int i = 1;
+		while( i < numsmall+1){
 			double x = Math.random() * 2000;
-			double y = Math.random() * 1000;
+			double y = Math.random() * 2000;
 			
+			Element e = new Element(new Vec2(x,y), new Vec2(0,0), ElementType.WATER, elements, Physics.waterDist);
+			elements.add(e);
+			hash.put(i, e);
 			
-			elements.add(new Element(new Vec2(x,y), new Vec2(0,0), ElementType.WATER, elements, Physics.waterDist));
+			i++;
 		}
 		
-
+		elements.add(new Element(new Vec2(1000,500), new Vec2(0,0), ElementType.ROCK, elements, Physics.rockDist));
+		
+		hash.put(0, elements.get(i-1));
+		//elements.add(new Element(new Vec2(500,500), new Vec2(0,2), ElementType.ROCK, elements, 40));
+		//hash.put(1, elements.get(i));
 		setFocusable(true);
-		System.out.println(totalframes);
 		
 		buffer = new ArrayDeque<BufferedImage>(bufferSize);
 		
 		new Thread(this).start();
 	}
 	
-	 public void update(){
-	    
-		 
-	    	for(int i = 0; i < elements.size(); i++){
-	    		for(int j = i+1; j< elements.size(); j++){
-	    			Physics.applyGravity(new Manifold(elements.get(i), elements.get(j)));
-	    			Physics.applySpring(new Manifold(elements.get(i), elements.get(j)));
-	    		}
-	    		
-	    		elements.get(i).update();
-	    	}
+	 public static void update(){
+		 	
+		 	for(int i = 0; i < hash.size(); i+=10){
+		 		try{
+		 			
+				for(int j = i+1; j< hash.size(); j+=10){
+			    	Physics.applyGravity(new Manifold(hash.get(i), hash.get(j)));
+			    	Physics.applySpring(new Manifold(hash.get(i), hash.get(j)));
+			    	
+			    	Physics.applyGravity(new Manifold(hash.get(i), hash.get(j+1)));
+			    	Physics.applySpring(new Manifold(hash.get(i), hash.get(j+1)));
+			    	
+			    	Physics.applyGravity(new Manifold(hash.get(i), hash.get(j+2)));
+			    	Physics.applySpring(new Manifold(hash.get(i), hash.get(j+2)));
+			    	
+			    	Physics.applyGravity(new Manifold(hash.get(i), hash.get(j+3)));
+			    	Physics.applySpring(new Manifold(hash.get(i), hash.get(j+3)));
+			    	
+			    	Physics.applyGravity(new Manifold(hash.get(i), hash.get(j+4)));
+			    	Physics.applySpring(new Manifold(hash.get(i), hash.get(j+4)));
+			    	
+			    	Physics.applyGravity(new Manifold(hash.get(i), hash.get(j+5)));
+			    	Physics.applySpring(new Manifold(hash.get(i), hash.get(j+5)));
+			    	
+			    	Physics.applyGravity(new Manifold(hash.get(i), hash.get(j+6)));
+			    	Physics.applySpring(new Manifold(hash.get(i), hash.get(j+6)));
+			    	
+			    	Physics.applyGravity(new Manifold(hash.get(i), hash.get(j+7)));
+			    	Physics.applySpring(new Manifold(hash.get(i), hash.get(j+7)));
+			    	
+			    	Physics.applyGravity(new Manifold(hash.get(i), hash.get(j+8)));
+			    	Physics.applySpring(new Manifold(hash.get(i), hash.get(j+8)));
+			    	
+			    	Physics.applyGravity(new Manifold(hash.get(i), hash.get(j+9)));
+			    	Physics.applySpring(new Manifold(hash.get(i), hash.get(j+9)));
+			    }
 
-			
+	    		
+	    			hash.get(i).update();
+	    			hash.get(i+1).update();
+	    			hash.get(i+2).update();
+	    			hash.get(i+3).update();
+	    			hash.get(i+4).update();
+	    			hash.get(i+5).update();
+	    			hash.get(i+6).update();
+	    			hash.get(i+7).update();
+	    			hash.get(i+8).update();
+	    			hash.get(i+9).update();
+	    		}catch(NullPointerException e){
+	    		}
+	    	}
+		 	
 	    }
 	
     public void run() {
@@ -246,6 +280,7 @@ public class SimPanel extends JPanel implements Runnable{
         		
         	}
             
+
         	update();
             drawImg();
             repaint();
@@ -254,17 +289,15 @@ public class SimPanel extends JPanel implements Runnable{
             frame++;
             tick++;
             
+            
         }
         
         es.shutdown();
-        boolean finished=false;
-        do{
-	        try{
-	        	 finished = es.awaitTermination(1, TimeUnit.MINUTES);
-	        }catch(InterruptedException e){
+        try{
+        	while(!es.awaitTermination(1, TimeUnit.MINUTES)){}
+	    }catch(InterruptedException e){
 	        	
-	        }
-        }while(!finished);
+	    }
         
         
         tick = bufferSize;
@@ -318,15 +351,44 @@ public class SimPanel extends JPanel implements Runnable{
     }
 	
     private BufferedImage getImageFromFile(int num){
-    	BufferedImage img = null;
-    	try {
-    	    img = ImageIO.read(new File(savedir, "\\"+folder+"\\"+((num<totalframes)?num:(totalframes-1))+".png"));
-    	} catch (IOException e) {
-    	}
+    	File f = new File(savedir, "\\"+folder+"\\"+((num<totalframes)?num:(totalframes-1))+".png");
     	
-    	return img;
+    	return loadImageCrazyFast(f);
     }
     
+    /**
+     * This is a bit of a hack and might change depending on which jdk you use!
+     */
+    public static BufferedImage loadImageCrazyFast( File src ){
+        try{
+            Image im = Toolkit.getDefaultToolkit().createImage( src.toURI().toURL() );
+            Method method = im.getClass().getMethod( "getBufferedImage" );
+            BufferedImage bim = null;
+            int counter = 0;
+            // load 30seconds maximum!
+            while( bim == null && counter < 3000 ){
+                im.getWidth( null );
+                bim = (BufferedImage) method.invoke( im );
+                try{ Thread.sleep( 10 ); }
+                catch( InterruptedException e ){ }
+                counter ++;
+            }
+           
+            if( bim != null ){
+                return bim;
+            }
+        }
+        catch( Exception e ){
+            System.err.println( "Fast loading of " + src.toString() + " failed. You might want to correct this in loadImageCrazyFast( URL )" );
+            System.err.println( "Falling back to ImageIO, which is... slow!" );
+        }
+        try{
+            return ImageIO.read( src );
+        }
+        catch( IOException ioe ){
+            return null;
+        }
+    }
     
     private void drawImg(){
     	BufferedImage bi = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_ARGB);
@@ -345,19 +407,13 @@ public class SimPanel extends JPanel implements Runnable{
 		
 		final BufferedImage fin = bi.getSubimage(0, 0, WIDTH, HEIGHT);
 		final int ftick = tick;
-		//System.out.println("tick = "+ftick);
 		es.execute( new Thread() {
 			    public void run() {
 
 			        	write(fin, folder, ftick);
+			        	written++;
 			    }  
 			});
-		
-		/*try{
-			one.join();
-		}catch(InterruptedException e){
-			System.err.println(e);
-		}*/
     }
     
 	public void paint(Graphics f1){
@@ -389,7 +445,12 @@ public class SimPanel extends JPanel implements Runnable{
 			f.setColor(Color.black);
 			f.fillRect(0, 0, parentWindow.getWidth(), parentWindow.getHeight());
 			f.setColor(Color.red);
-			f.fillRect(1, 1, (int)(percent*(parentWindow.getWidth()-1)), parentWindow.getContentPane().getHeight());
+			f.fillRect(1, 1, (int)(percent*(parentWindow.getWidth()-1)), parentWindow.getContentPane().getHeight()/2-2);
+			
+			percent = written/(double)totalframes;
+			
+			f.setColor(Color.blue);
+			f.fillRect(1, parentWindow.getContentPane().getHeight()/2+1, (int)(percent*(parentWindow.getWidth()-1)), parentWindow.getContentPane().getHeight()/2-2);
 			
 			f.setColor(Color.WHITE);
 			
