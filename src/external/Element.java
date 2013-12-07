@@ -14,8 +14,6 @@ public class Element{
 	
 	private Vec2 force;
 	
-	private Vec2 latentForce;
-	
 	private ElementType type;
 	
 	private double invmass;
@@ -46,7 +44,6 @@ public class Element{
 		this.velocity = v;
 		
 		this.force = new Vec2(0,0);
-		this.latentForce = new Vec2(0,0);
 		
 		this.type = t;
 		
@@ -87,12 +84,6 @@ public class Element{
 		this.force = Vec2.add(force, f);
 	}
 	
-	public void setLatentForce(Vec2 f){
-		this.latentForce = f;
-	}
-	public void addLatentForce(Vec2 f){
-		this.latentForce = Vec2.add(force, f);
-	}
 	
 	public void setMass(double m){
 		if(m != 0)
@@ -142,95 +133,31 @@ public class Element{
 	
 	private double calculateArea(){
 		return Math.PI * r * r;
-		
-		/*double total = 0;
-		
-		
-		for(Circle c : circles){
-			total += Math.PI * c.getR() * c.getR();
-		}
-		return total;*/
 	}
 	
 	public void draw(Graphics2D g){
 		g.setColor(getType().getColor());
-		//for(Circle c : circles){
-			circles.get(0).draw(getPosition(), g);
-		//}
+
+		circles.get(0).draw(getPosition(), g);
+
 		
 	}
 	
 	public void update(){
 		
 		step();
-		
-		/*ArrayList<Element> collidingWith = new ArrayList<Element>();
-		
-		for(Element e : elements){
-			if(e != this){
-				if(colliding(e)){
-					collidingWith.add(e);
-					Manifold m = new Manifold(this, e);
-					Physics.resolveCollision(m);
-					
-				}
-			}
-		}*/
-		
-		/*if(collidingWith.size() == 1){
-			Manifold m = new Manifold(this, collidingWith.get(0));
-			Physics.resolveCollision(m);
-		}else{
-			
-		}*/
-		
-		//setVelocity(Vec2.multiply(velocity, 0.9));
-		
-		
-		
 	}
 	
 	public boolean colliding(Element e){
 		
 		return Circle.intersecting(getPosition(), circles.get(0), e.getPosition(), e.circles.get(0));		
 		
-		/*for(Circle c : circles){
-					for(Circle d : e.circles){
-						if(Circle.intersecting(getPosition(), c, e.getPosition(), d)){
-							return true;
-						}
-					}
-				}
-		
-		return false;*/
 	}
 	
 	public void step(){
 		setVelocity(Vec2.add(getVelocity(), Vec2.multiply(force,getInvMass())));
 		setPosition( Vec2.add(getPosition(), getVelocity()) );
 		force.set(0,0);
-		//latentForce.set(0, 0);
 	}
 	
-	/*public boolean inContact(Element e){
-		Circle Ac = null;
-		Circle Bc = null;
-		double dist;
-		
-		for(Circle c : A.getBounds()){
-			for(Circle d : B.getBounds()){
-				if(Circle.intersecting(A.getPosition(), c, B.getPosition(), d)){
-					Ac = c;
-					Bc = d;
-				}
-			}
-		}
-		
-		double dx = A.getX() + Ac.getX() - (B.getX() + Bc.getX());
-		double dy = A.getY() + Ac.getY() - (B.getY() + Bc.getY());
-		
-		double dist = Math.sqrt(dx*dx + dy*dy);
-		
-		penetrationDepth = Ac.getR() + Bc.getR() - dist;
-	}*/
 }

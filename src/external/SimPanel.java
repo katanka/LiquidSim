@@ -7,6 +7,9 @@ import java.io.File;
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -14,8 +17,8 @@ import javax.swing.*;
 import physics.*;
 
  
-@SuppressWarnings("serial")
-public class SimPanel extends JPanel implements Runnable, KeyListener {
+//@SuppressWarnings("serial")
+public class SimPanel extends JPanel implements Runnable{
 	private static int fps = 30;
 	private static int dt;
 	private static int WIDTH;
@@ -36,16 +39,18 @@ public class SimPanel extends JPanel implements Runnable, KeyListener {
 	private long timebase;
 	private int currentfps;
 	
+	
 	public static SimPanel me;
 	
 	public static JFrame parentWindow;
 	
 	public static JPanel form;
-	public static JTextField framesInput;
 	public static JTextField timeInput;
 	public static JTextField numInput;
 	
 	private static ArrayDeque<BufferedImage> buffer;
+	
+	private static ExecutorService es = Executors.newCachedThreadPool();
 	
 	private static int totalframes = 1;
 	
@@ -62,8 +67,6 @@ public class SimPanel extends JPanel implements Runnable, KeyListener {
         
         form = new JPanel();
         
-        framesInput = new JTextField(3);
-        JLabel framesLabel = new JLabel("Frames per Second: ");
         
         timeInput = new JTextField(3);
         JLabel timeLabel = new JLabel("Time to Simulate (s): ");
@@ -84,8 +87,8 @@ public class SimPanel extends JPanel implements Runnable, KeyListener {
 
 
 
-        form.add(framesLabel);
-        form.add(framesInput);
+        //form.add(framesLabel);
+        //form.add(framesInput);
         
         form.add(timeLabel);
         form.add(timeInput);
@@ -106,9 +109,6 @@ public class SimPanel extends JPanel implements Runnable, KeyListener {
 
             @Override
             public void windowClosing(WindowEvent e) {
-                
-            	
-            	
                 	purgeDirectory(savedir);
                    System.exit(0);
             }
@@ -155,7 +155,7 @@ public class SimPanel extends JPanel implements Runnable, KeyListener {
 	
 	public static void finish(){
 		
-		fps = getInteger(framesInput.getText());
+		//fps = getInteger(framesInput.getText());
 		numsmall = getInteger(numInput.getText());
 		time = getDouble(timeInput.getText());
 		
@@ -191,7 +191,7 @@ public class SimPanel extends JPanel implements Runnable, KeyListener {
 		//elements.add(new Element(new Vec2(250,40), new Vec2(0,0), ElementType.ROCK, elements, 20));
 		//elements.add(new Element(new Vec2(100,250), new Vec2(1,0), ElementType.ROCK, elements, 20));
 		elements.add(new Element(new Vec2(1000,500), new Vec2(0,0), ElementType.ROCK, elements, Physics.rockDist));
-		
+		elements.add(new Element(new Vec2(700,500), new Vec2(0,2), ElementType.ROCK, elements, 40));
 		
 		for(int i = 0; i < 0; i++){
 			double x = Math.random() * 1000+500;
@@ -211,7 +211,6 @@ public class SimPanel extends JPanel implements Runnable, KeyListener {
 		
 
 		setFocusable(true);
-		addKeyListener(this);
 		System.out.println(totalframes);
 		
 		buffer = new ArrayDeque<BufferedImage>(bufferSize);
@@ -221,15 +220,8 @@ public class SimPanel extends JPanel implements Runnable, KeyListener {
 	
 	 public void update(){
 	    
-		 if(tick == 0){
-			 //System.err.println("YEAH");
-			 elements.add(new Element(new Vec2(700,500), new Vec2(0,2), ElementType.ROCK, elements, 40));
-			 //added = true;
-		 }
 		 
 	    	for(int i = 0; i < elements.size(); i++){
-	    		
-	    		
 	    		for(int j = i+1; j< elements.size(); j++){
 	    			Physics.applyGravity(new Manifold(elements.get(i), elements.get(j)));
 	    			Physics.applySpring(new Manifold(elements.get(i), elements.get(j)));
@@ -262,50 +254,47 @@ public class SimPanel extends JPanel implements Runnable, KeyListener {
             frame++;
             tick++;
             
-            /*try {
-                tm += dt;
-                Thread.sleep(!complete ? 0 : Math.max(0, tm - System.currentTimeMillis()));
-            }
-            catch(InterruptedException e)
-            {
-            	System.err.println(e);
-            }*/
         }
+        
+        es.shutdown();
+        boolean finished=false;
+        do{
+	        try{
+	        	 finished = es.awaitTermination(1, TimeUnit.MINUTES);
+	        }catch(InterruptedException e){
+	        	
+	        }
+        }while(!finished);
+        
+        
         tick = bufferSize;
         playing = true;
         
         buffering = true;
-        parentWindow.setSize(1920, 1080);
+        parentWindow.setSize(WIDTH, HEIGHT);
         parentWindow.setLocation(0, 0);
         while(buffertick < bufferSize){
-        	if(getImageFromFile(buffertick) == null){
-        		//System.err.println("HOLY BALLS: "+i);
-        		System.exit(0);
-        	}
         	
         	buffer.add(getImageFromFile(buffertick));
         	repaint();
-        	 buffertick++;
+        	buffertick++;
         }
         buffering = false;
         while(playing){
         	try{
-        		//if(buffer.size() < bufferSize)
-        			buffer.add(getImageFromFile(tick));
+        		buffer.add(getImageFromFile(tick));
         	}catch(Exception e){
         		
         	}
         	repaint();
             tick++;
-            //System.out.println("olo");
             
 
             
             if(tick > totalframes){
             	tick=0;
-            	//System.out.println("Yolo");
-            	//playing = false;
             }
+            
             try {
                 tm += dt;
                 Thread.sleep(Math.max(0, tm - System.currentTimeMillis()));
@@ -338,24 +327,6 @@ public class SimPanel extends JPanel implements Runnable, KeyListener {
     	return img;
     }
     
-    private Vec2 getCenterOfMass(ArrayList<Element> elements){
-    	
-    	if(elements.size() == 0)
-    		return new Vec2(0,0);
-    	
-    	double mass = 0;
-    	double Mx = 0;
-    	double My = 0;
-    	
-    	for(Element e : elements){
-    		double m = e.getMass();
-    		mass += m;
-    		Mx += m * e.getX();
-    		My += m * e.getY();
-    	}
-    	
-    	return new Vec2(Mx/mass, My/mass);
-    }
     
     private void drawImg(){
     	BufferedImage bi = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_ARGB);
@@ -375,20 +346,18 @@ public class SimPanel extends JPanel implements Runnable, KeyListener {
 		final BufferedImage fin = bi.getSubimage(0, 0, WIDTH, HEIGHT);
 		final int ftick = tick;
 		//System.out.println("tick = "+ftick);
-		Thread one = new Thread() {
+		es.execute( new Thread() {
 			    public void run() {
 
 			        	write(fin, folder, ftick);
-
-
 			    }  
-			};
-		try{
-			one.start();
+			});
+		
+		/*try{
 			one.join();
 		}catch(InterruptedException e){
 			System.err.println(e);
-		}
+		}*/
     }
     
 	public void paint(Graphics f1){
@@ -463,24 +432,6 @@ public class SimPanel extends JPanel implements Runnable, KeyListener {
 		}catch(IOException e){
 			System.err.println(e);
 		}
-
-	}
-	
-	public void keyPressed(KeyEvent e) {
-
-	    //int key = e.getKeyCode();
-
-	
-	}
-	
-	public void keyReleased(KeyEvent e) {
-
-	    //int key = e.getKeyCode();
-	    
-	    
-	}
-	
-	public void keyTyped(KeyEvent e) {
 
 	}
 }
